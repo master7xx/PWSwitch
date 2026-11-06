@@ -1,5 +1,7 @@
 # PWSwitch
 
+Hecho por inteligencia artificial bajo la supervisión de una inteligencia ebria.
+
 PWSwitch es una pequeña aplicación para la bandeja de Windows x64 que permite elegir planes de energía y editar sus parámetros. Usa las API nativas Win32 y Windows Power, y no necesita una instalación adicional de .NET ni del entorno de ejecución de Visual C++. Se ha probado en Windows 11; la compatibilidad con Windows 10 no se ha verificado por separado.
 
 La interfaz está disponible en español, inglés y ruso. Por defecto utiliza el idioma de interfaz de Windows y recurre al inglés si no es compatible. El idioma se puede cambiar en el menú de la bandeja. Todos los nombres de planes y las descripciones proceden de Windows y se conservan sin cambios. Windows proporciona los botones de los diálogos del sistema, por lo que pueden aparecer en el idioma del sistema.
