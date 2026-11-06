@@ -2,6 +2,8 @@
 
 Made by artificial intelligence under the supervision of an intoxicated intelligence.
 
+Inspired by PowerPlanSwitcher.
+
 PWSwitch is a small Windows x64 tray application for selecting power plans and editing their settings. It uses native Win32 and Windows Power API calls and does not require a separate .NET or Visual C++ runtime installation. It has been tested on Windows 11; Windows 10 compatibility has not been verified separately.
 
 The interface is available in English, Russian and Spanish. It follows the Windows user interface language by default, falling back to English. You can change the language from the tray menu. All plan names and setting descriptions come from Windows and remain unchanged. Windows supplies the buttons in system dialogs, so those labels may use the system language.
