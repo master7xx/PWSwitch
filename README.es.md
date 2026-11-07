@@ -1,5 +1,7 @@
 # PWSwitch
 
+[English](README.md) · [Русский](README.ru.md)
+
 Hecho por inteligencia artificial bajo la supervisión de una inteligencia ebria.
 
 Inspirado en PowerPlanSwitcher.

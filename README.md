@@ -1,48 +1,28 @@
 # PWSwitch
 
-[English](README.en.md) · [Español](README.es.md)
+[Русский](README.ru.md) · [Español](README.es.md)
 
-Сделано искусственным интеллектом под контролем нетрезвого интеллекта.
+Made by artificial intelligence under the supervision of an intoxicated intelligence.
 
-Вдохновлено PowerPlanSwitcher.
+Inspired by PowerPlanSwitcher.
 
-Небольшое приложение для Windows x64: переключение схем питания из системного трея и редактирование их параметров. Написано на C++ с использованием Win32 и Windows Power API. Готовому приложению не требуется установка .NET или распространяемого пакета Visual C++. Проверено на Windows 11; совместимость с Windows 10 пока отдельно не подтверждена.
+PWSwitch is a small Windows x64 tray application for selecting power plans and editing their settings. It uses native Win32 and Windows Power API calls and does not require a separate .NET or Visual C++ runtime installation. It has been tested on Windows 11; Windows 10 compatibility has not been verified separately.
 
-Приложение управляет именно схемами питания Windows. Отдельный переключатель «Режим питания» в приложении «Параметры» оно напрямую не настраивает; доступность этого переключателя может зависеть от выбранной схемы.
+The interface is available in English, Russian and Spanish. It follows the Windows user interface language by default, falling back to English. You can change the language from the tray menu. All plan names and setting descriptions come from Windows and remain unchanged. Windows supplies the buttons in system dialogs, so those labels may use the system language.
 
-## Запуск
+Use the tray menu to choose a power plan, set display and sleep timeouts, open the advanced editor, undo the most recent power-setting change, or exit. Quick timeouts apply to both AC and battery. The editor shows the two values separately and can optionally show settings normally hidden by Windows. Autostart is optional, applies to the current user, and can also be disabled in Windows startup settings.
 
-Запустите `build\PWSwitch.exe`. Значок появится в области уведомлений Windows; он может находиться за стрелкой скрытых значков. Нажмите на значок, чтобы выбрать схему, изменить время отключения экрана или перехода в сон, открыть расширенные настройки либо выйти из приложения. Один и тот же выбранный быстрый интервал применяется для сети и батареи; если текущие значения различаются, меню показывает оба. При вводе своего времени `0` означает «никогда».
+Build from the repository root with the x64 C++ tools and Windows SDK installed:
 
-Интерфейс доступен на русском, английском и испанском языках. По умолчанию выбирается язык интерфейса Windows; для неподдерживаемого языка используется английский. Язык можно изменить через меню трея. Названия всех схем и описания параметров берутся из Windows и сохраняются без изменений. Подписи кнопок системных диалогов предоставляет Windows, поэтому они могут отличаться от выбранного языка приложения.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
+```
 
-В окне расширенных настроек можно выбрать схему, параметр и отдельно изменить значения для сети и батареи. Кнопка «Обновить» перечитывает состояние Windows. По желанию включается показ скрытых параметров: они отмечены значком ◆ с пояснением. Состав и доступность параметров зависят от устройства и версии Windows. Если Windows не предоставляет достаточные данные о типе параметра или отказывает в доступе, изменить его через редактор может быть невозможно.
+The result is `build\PWSwitch.exe`. The application does not contain network, telemetry or automatic update features. The selected language is stored under `HKCU\Software\PWSwitch\Language`; autostart is stored separately when enabled. The local executable is unsigned; a source review or matching builds do not prove the absence of every vulnerability. [MIT License](LICENSE).
 
-Цвет значка трея обозначает предполагаемую категорию активной схемы: салатовый — сильное энергосбережение, зелёный — экономия, жёлтый — баланс, оранжевый — повышенная мощность, красный — наибольшая мощность. Цвет не измеряет реальное электропотребление. Стандартные схемы распознаются по идентификатору, пользовательские — по характерным русским, английским и испанским словам в названии; неоднозначные и неизвестные названия получают нейтральный цвет. Наведите курсор на значок, чтобы увидеть название и категорию. Значок обновляется и при переключении схемы вне приложения.
+## Build and test
 
-В меню схемы отмечены цветными значками, команды — контурными символами. Текущая схема и выбранный интервал дополнительно отмечены галочкой справа.
-
-Пункт «Отменить» возвращает последнее изменение, сделанное в приложении: выбранную схему или значение параметра. Для быстрого интервала восстанавливаются прежние отдельные значения сети и батареи. История доступна до выхода из приложения. Если после изменения те же данные успела изменить другая программа, PWSwitch предупредит и не станет их сознательно перезаписывать. Проверка и запись являются отдельными операциями Windows, поэтому полностью исключить одновременные изменения невозможно.
-
-В редакторе можно подготовить разные значения для сети и батареи и применять их независимо. При попытке закрыть окно или перейти к другому параметру с неприменённым черновиком приложение предупредит об этом: можно вернуться к редактированию или отбросить изменения. Если значение извне изменилось перед применением, редактор сохранит черновик и покажет текущее значение.
-
-Закрытие окна настроек оставляет приложение в трее. Для завершения работы используйте пункт «Выход» в меню значка. Автозапуск самостоятельно не включается: его можно включить или выключить в меню трея для текущего пользователя. Windows также может отключить его в своих настройках автозагрузки. Можно открыть окно настроек сразу при запуске командой `PWSwitch.exe --settings`; повторный запуск уже работающей программы тоже открывает существующее окно настроек.
-
-## Приватность и безопасность
-
-В исходном коде приложения нет сетевых функций, телеметрии или автообновления. При включении автозапуска по вашему выбору создаётся запись `PWSwitch` для текущего пользователя. Выбранный язык сохраняется в `HKCU\Software\PWSwitch\Language`; выбор языка Windows удаляет только это значение. Системная панель питания открывается по полному пути к системному `control.exe`. Приложение наследует права процесса, из которого его запустили, и не запрашивает повышение прав самостоятельно.
-
-Готовый исполняемый файл не подписан цифровой подписью; при желании его можно собрать из исходного кода. Проверка исходников и исполняемого файла помогает найти подозрительные действия, но сама по себе не доказывает отсутствие всех уязвимостей или доверенность используемых средств сборки.
-
-Сборка использует опцию MSVC `/Brepro`. На текущей машине две последовательные сборки в одном каталоге с одинаковыми исходниками и инструментами дали одинаковый SHA-256. Это упрощает локальную сверку, но не доказывает доверенность компилятора или воспроизводимость на другой машине: путь проекта, версии MSVC и Windows SDK и другие условия могут изменить хеш. Скрипт выбирает последнюю установленную версию средств Visual C++.
-
-## Лицензия
-
-Исходный код распространяется на условиях [MIT License](LICENSE).
-
-## Сборка и проверка
-
-Для **сборки** необходимы Visual Studio или Build Tools с компонентом C++ для x64 и Windows SDK. После установки средств сборки выполните в PowerShell из каталога проекта:
+Install the x64 C++ tools and Windows SDK, then run from the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
@@ -80,10 +60,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\relaunch_smoke.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\power_options_smoke.ps1
 ```
 
-Для GUI-проверок нужен работающий рабочий стол Windows и не должно быть другого экземпляра PWSwitch. Проверки записи создают временную копию схемы, изменяют её и удаляют; активная схема не переключается. Редактор использует API Windows, поэтому политики организации и права доступа могут ограничивать изменение параметров. Одновременные изменения схем другим приложением проверяются перед записью, но Windows не предоставляет атомарной операции для всех таких действий.
+GUI tests require an active Windows desktop and no other PWSwitch instance. Write tests create, modify and delete a temporary copy of a power plan without changing the active plan. Windows policies or permissions may prevent changes. Checks for external changes and writes are separate operations, so concurrent changes cannot be completely excluded.
 
-Проверка `power_options_smoke.ps1` ненадолго перемещает указатель мыши и открывает системное окно электропитания, после чего закрывает обнаруженное новое окно и возвращает указатель. Она распознаёт название окна на русском и английском языках.
+`power_options_smoke.ps1` briefly moves the mouse pointer and opens Windows Power Options, then closes the newly detected window and restores the pointer. It recognizes Russian and English window titles.
 
-Дополнительные проверки `tests\undo_smoke.ps1`, `tests\live_extremes.ps1` и `tests\custom_sleep_smoke.ps1` временно переключают активную схему и затем стараются восстановить её. При принудительном завершении проверки восстановление может не выполниться.
-
-Для проверки удобства вручную есть короткий [список сценариев](docs/usability-check.md).
+Additional tests `tests\undo_smoke.ps1`, `tests\live_extremes.ps1` and `tests\custom_sleep_smoke.ps1` temporarily switch the active plan and attempt to restore it afterward. Forced termination can prevent restoration. A [manual usability checklist](docs/usability-check.md) is also available.
