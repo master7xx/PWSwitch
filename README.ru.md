@@ -4,7 +4,7 @@
 
 Сделано искусственным интеллектом под контролем нетрезвого интеллекта.
 
-Вдохновлено PowerPlanSwitcher.
+Проект вдохновлён такими программами, как PowerPlanSwitcher. Мне захотелось сделать свою версию: простое нативное приложение с удобным переключением схем и более широким доступом к их настройкам. Это личный проект, и ему ещё есть куда расти.
 
 Небольшое приложение для Windows x64: переключение схем питания из системного трея и редактирование их параметров. Написано на C++ с использованием Win32 и Windows Power API. Готовому приложению не требуется установка .NET или распространяемого пакета Visual C++. Проверено на Windows 11; совместимость с Windows 10 пока отдельно не подтверждена.
 
@@ -12,7 +12,7 @@
 
 ## Запуск
 
-Запустите `build\PWSwitch.exe`. Значок появится в области уведомлений Windows; он может находиться за стрелкой скрытых значков. Нажмите на значок, чтобы выбрать схему, изменить время отключения экрана или перехода в сон, открыть расширенные настройки либо выйти из приложения. Один и тот же выбранный быстрый интервал применяется для сети и батареи; если текущие значения различаются, меню показывает оба. При вводе своего времени `0` означает «никогда».
+Скачайте `PWSwitch-portable.zip` со [страницы последнего выпуска](https://github.com/master7xx/PWSwitch/releases/latest), распакуйте архив в удобную папку и запустите `PWSwitch.exe`. Если собирали приложение самостоятельно, запустите `build\PWSwitch.exe`. Значок появится в области уведомлений Windows; он может находиться за стрелкой скрытых значков. Нажмите на значок, чтобы выбрать схему, изменить время отключения экрана или перехода в сон, открыть расширенные настройки либо выйти из приложения. Один и тот же выбранный быстрый интервал применяется для сети и батареи; если текущие значения различаются, меню показывает оба. При вводе своего времени `0` означает «никогда».
 
 Интерфейс доступен на русском, английском и испанском языках. По умолчанию выбирается язык интерфейса Windows; для неподдерживаемого языка используется английский. Язык можно изменить через меню трея. Названия всех схем и описания параметров берутся из Windows и сохраняются без изменений. Подписи кнопок системных диалогов предоставляет Windows, поэтому они могут отличаться от выбранного языка приложения.
 
@@ -44,43 +44,13 @@
 
 ## Сборка и проверка
 
-Для **сборки** необходимы Visual Studio или Build Tools с компонентом C++ для x64 и Windows SDK. После установки средств сборки выполните в PowerShell из каталога проекта:
+Для сборки установите Visual Studio или Visual Studio Build Tools с рабочей нагрузкой «Разработка классических приложений на C++», средствами C++ для x64 и Windows SDK. Склонируйте репозиторий или скачайте и распакуйте исходники, откройте PowerShell в папке проекта и выполните:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Tests
-.\build\power_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -IconTests
-.\build\icon_style_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -UndoTests
-.\build\undo_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -LabelsTests
-.\build\labels_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -TransactionTests
-.\build\transaction_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -SystemTests
-.\build\system_commands_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -I18nTests
-.\build\i18n_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -I18nRegistryTests
-.\build\i18n_registry_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -LanguageUiTests
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\language_ui.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -AutostartTests
-.\build\autostart_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -RangeMetadataTests
-.\build\range_metadata_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -OptionInputTests
-.\build\option_input_tests.exe
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -RangeMetadataUiTests
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\range_metadata_ui.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\manifest_smoke.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\app_icon_smoke.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\ui_smoke.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\ui_roundtrip.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\relaunch_smoke.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\power_options_smoke.ps1
 ```
+
+Результат — `build\PWSwitch.exe`. Перед повторной сборкой закройте работающую копию этого файла. [Команды тестов и пояснения](docs/TESTING.md).
 
 Для GUI-проверок нужен работающий рабочий стол Windows и не должно быть другого экземпляра PWSwitch. Проверки записи создают временную копию схемы, изменяют её и удаляют; активная схема не переключается. Редактор использует API Windows, поэтому политики организации и права доступа могут ограничивать изменение параметров. Одновременные изменения схем другим приложением проверяются перед записью, но Windows не предоставляет атомарной операции для всех таких действий.
 
