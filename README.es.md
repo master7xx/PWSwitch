@@ -12,6 +12,8 @@ La interfaz está disponible en español, inglés y ruso. Por defecto utiliza el
 
 El menú permite elegir un plan, ajustar los tiempos de apagado de pantalla y suspensión, abrir el editor avanzado, deshacer el último cambio de energía o salir. Los tiempos rápidos se aplican tanto a la corriente como a la batería. El editor muestra ambos valores por separado y puede mostrar los parámetros que Windows oculta normalmente. El inicio automático es opcional, se aplica al usuario actual y también puede desactivarse en la configuración de inicio de Windows.
 
+El menú también incluye «Acerca de», con la versión, la licencia y la dirección del proyecto.
+
 Para compilar desde la raíz del repositorio, instala las herramientas C++ para x64 y el SDK de Windows y ejecuta:
 
 ```powershell

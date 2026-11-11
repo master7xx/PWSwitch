@@ -117,7 +117,7 @@ int main() {
         std::vector<std::vector<DWORD>> menu_images;
         for (const auto& kind : {menu_art::Kind::scheme, menu_art::Kind::display, menu_art::Kind::sleep,
                 menu_art::Kind::settings, menu_art::Kind::windows, menu_art::Kind::exit,
-                menu_art::Kind::clock, menu_art::Kind::never, menu_art::Kind::custom, menu_art::Kind::undo}) {
+                menu_art::Kind::clock, menu_art::Kind::never, menu_art::Kind::custom, menu_art::Kind::undo, menu_art::Kind::about}) {
             HBITMAP bitmap = menu_art::make_bitmap(kind, lime);
             if (!bitmap) throw std::runtime_error("menu icon creation failed");
             DIBSECTION dib{};

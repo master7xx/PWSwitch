@@ -61,6 +61,8 @@ DWORD sample(Kind kind, const icon_style::Style& scheme, double x, double y, DWO
     case Kind::undo:
         on = (ring(x,y,8.8,8.3,4.5) && (x >= 6 || y >= 8)) ||
              line(x,y,3.1,4.8,3.1,8.2) || line(x,y,3.1,8.2,6.5,8.2) || line(x,y,3.1,8.2,5.5,5.8); break;
+    case Kind::about:
+        on = ring(x,y,8,8,5.7) || dist(x,y,8,5.1) <= .8 || line(x,y,8,7.2,8,11.3,1.5); break;
     }
     return on ? ink : 0;
 }

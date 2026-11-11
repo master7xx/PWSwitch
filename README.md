@@ -12,6 +12,8 @@ The interface is available in English, Russian and Spanish. It follows the Windo
 
 Use the tray menu to choose a power plan, set display and sleep timeouts, open the advanced editor, undo the most recent power-setting change, or exit. Quick timeouts apply to both AC and battery. The editor shows the two values separately and can optionally show settings normally hidden by Windows. Autostart is optional, applies to the current user, and can also be disabled in Windows startup settings.
 
+The tray menu also includes an About dialog with the version, license and project address.
+
 Build from the repository root with the x64 C++ tools and Windows SDK installed:
 
 ```powershell

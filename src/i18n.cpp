@@ -8,6 +8,9 @@ namespace {
 Language selected = Language::system, effective = Language::english;
 const Entry catalog[] = {
 {L"Язык", L"Language", L"Idioma"},
+{L"О программе…", L"About…", L"Acerca de…"},
+{L"PWSwitch — о программе", L"About PWSwitch", L"Acerca de PWSwitch"},
+{L"Переключение схем питания Windows из системного трея.", L"Switch Windows power plans from the notification area.", L"Cambie los planes de energía de Windows desde el área de notificación."},
 {L"Язык Windows", L"Windows language", L"Idioma de Windows"},
 {L"English", L"English", L"English"}, {L"Русский", L"Русский", L"Русский"}, {L"Español", L"Español", L"Español"},
 {L"Никогда", L"Never", L"Nunca"},

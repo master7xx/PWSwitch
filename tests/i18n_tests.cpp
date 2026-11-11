@@ -50,6 +50,7 @@ void check_lookup_and_preference() {
     i18n::set_for_testing(Language::russian);
     require(i18n::preference() == Language::russian && i18n::current() == Language::russian, "Russian preference not applied");
     expect_text(L"Применить", L"Применить");
+    expect_text(L"О программе…", L"О программе…");
     // The source exception messages are English, so returning the untranslated
     // key is not a complete Russian translation.
     require(std::wstring(i18n::text(L"Windows returned no active scheme")) != L"Windows returned no active scheme", "missing Russian error translation");
@@ -58,9 +59,13 @@ void check_lookup_and_preference() {
     i18n::set_for_testing(Language::english);
     require(i18n::preference() == Language::english && i18n::current() == Language::english, "English preference not applied");
     expect_text(L"Применить", L"Apply");
+    expect_text(L"О программе…", L"About…");
+    expect_text(L"Переключение схем питания Windows из системного трея.", L"Switch Windows power plans from the notification area.");
     i18n::set_for_testing(Language::spanish);
     require(i18n::preference() == Language::spanish && i18n::current() == Language::spanish, "Spanish preference not applied");
     expect_text(L"Применить", L"Aplicar");
+    expect_text(L"О программе…", L"Acerca de…");
+    expect_text(L"Переключение схем питания Windows из системного трея.", L"Cambie los planes de energía de Windows desde el área de notificación.");
     expect_text(L"unrecognized key", L"unrecognized key");
     require(std::wstring(i18n::text(nullptr)).empty(), "null translation key must be safe");
 

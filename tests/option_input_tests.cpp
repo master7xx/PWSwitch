@@ -16,6 +16,8 @@ bool ac_enabled = true, dc_enabled = true;
 int writes = 0;
 int language_changes = 0;
 std::wstring texts[7];
+std::wstring dialog_message, dialog_title;
+bool about_menu_present = false;
 std::vector<std::wstring> ac_choices, dc_choices;
 size_t id(HWND window) { return reinterpret_cast<size_t>(window); }
 LRESULT WINAPI fake_send_message(HWND window, UINT message, WPARAM wp, LPARAM lp) {
@@ -47,7 +49,16 @@ int WINAPI fake_get_text(HWND window, LPWSTR text, int count) {
     std::copy_n(value.c_str(), n, text); text[n] = L'\0'; return n;
 }
 BOOL WINAPI fake_is_window(HWND window) { return window != nullptr; }
-int WINAPI fake_message_box(HWND, LPCWSTR, LPCWSTR, UINT) { return IDNO; }
+int WINAPI fake_message_box(HWND, LPCWSTR message, LPCWSTR title, UINT) {
+    dialog_message = message ? message : L"";
+    dialog_title = title ? title : L"";
+    return IDNO;
+}
+BOOL WINAPI fake_track_menu(HMENU menu, UINT, int, int, int, HWND, const RECT*) {
+    MENUITEMINFOW item{}; item.cbSize = sizeof(item); item.fMask = MIIM_STATE;
+    about_menu_present = GetMenuItemInfoW(menu, 3006, FALSE, &item) && !(item.fState & (MFS_DISABLED | MFS_GRAYED));
+    return about_menu_present ? 3006 : 0;
+}
 }
 namespace power {
 DWORD fake_read_value(const GUID&, const GUID&, const GUID&, bool) { return 42; }
@@ -67,6 +78,7 @@ void test_select(Language language) { ++language_changes; set_for_testing(langua
 #define write_value fake_write_value
 #define IsWindow fake_is_window
 #define MessageBoxW fake_message_box
+#define TrackPopupMenu fake_track_menu
 #define select test_select
 #include "../src/main.cpp"
 #undef SendMessageW
@@ -78,6 +90,7 @@ void test_select(Language language) { ++language_changes; set_for_testing(langua
 #undef write_value
 #undef IsWindow
 #undef MessageBoxW
+#undef TrackPopupMenu
 #undef select
 
 int main() {
@@ -112,5 +125,17 @@ int main() {
     if (undo_caption_text().find(L"fixture-plan-017") == std::wstring::npos || undo_caption_text().find(L"display") == std::wstring::npos) return 7;
     i18n::set_for_testing(i18n::Language::spanish);
     if (undo_caption_text().find(L"fixture-plan-017") == std::wstring::npos || undo_caption_text().find(L"pantalla") == std::wstring::npos) return 8;
+    for (const auto& item : {std::make_pair(i18n::Language::russian, L"PWSwitch — о программе"),
+                              std::make_pair(i18n::Language::english, L"About PWSwitch"),
+                              std::make_pair(i18n::Language::spanish, L"Acerca de PWSwitch")}) {
+        i18n::set_for_testing(item.first);
+        about_menu_present = false;
+        tray_menu();
+        if (!about_menu_present) return 10;
+        if (dialog_title != item.second || dialog_message.find(L"PWSwitch 1.1.0") == std::wstring::npos ||
+            dialog_message.find(L"MIT License") == std::wstring::npos ||
+            dialog_message.find(L"https://github.com/master7xx/PWSwitch") == std::wstring::npos ||
+            dialog_message.find(i18n::text(L"Переключение схем питания Windows из системного трея.")) == std::wstring::npos) return 9;
+    }
     return 0;
 }

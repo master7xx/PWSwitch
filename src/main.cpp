@@ -23,7 +23,7 @@ constexpr UINT commit_scheme_message = WM_APP + 2;
 constexpr int ID_SCHEME = 100, ID_LIST = 101, ID_HIDDEN = 102, ID_AC = 103, ID_DC = 104,
     ID_APPLY_AC = 105, ID_APPLY_DC = 106, ID_REFRESH = 107;
 constexpr UINT MENU_PLAN = 1000, MENU_DISPLAY = 2000, MENU_SLEEP = 2100, MENU_ADVANCED = 3000,
-    MENU_WINDOWS = 3001, MENU_EXIT = 3002, MENU_UNDO = 3003, MENU_AUTOSTART = 3004, MENU_AUTOSTART_REMOVE = 3005,
+    MENU_WINDOWS = 3001, MENU_EXIT = 3002, MENU_UNDO = 3003, MENU_AUTOSTART = 3004, MENU_AUTOSTART_REMOVE = 3005, MENU_ABOUT = 3006,
     MENU_LANGUAGE = 3100;
 const DWORD intervals[] = {0, 60, 300, 600, 900, 1800, 3600, 7200};
 const wchar_t* interval_labels[] = {L"Никогда", L"1 минута", L"5 минут", L"10 минут", L"15 минут", L"30 минут", L"1 час", L"2 часа"};
@@ -149,6 +149,12 @@ std::wstring exception_text(const std::exception& ex) {
 void report(HWND owner, const std::exception& ex) {
     auto message = exception_text(ex);
     MessageBoxW(owner, message.c_str(), L"PWSwitch", MB_OK | MB_ICONERROR);
+}
+void show_about() {
+    std::wstring message = L"PWSwitch 1.1.0\r\n\r\n";
+    message += i18n::text(L"Переключение схем питания Windows из системного трея.");
+    message += L"\r\n\r\nMIT License\r\nhttps://github.com/master7xx/PWSwitch";
+    MessageBoxW(main_window, message.c_str(), i18n::text(L"PWSwitch — о программе"), MB_OK | MB_ICONINFORMATION);
 }
 struct EditorModalGuard {
     bool previous;
@@ -759,6 +765,8 @@ void tray_menu() {
         }
         AppendMenuW(menu, MF_STRING | (undo_history.available() ? 0 : MF_GRAYED), MENU_UNDO, undo_caption.c_str());
         images.attach(menu, MENU_UNDO, false, menu_art::Kind::undo);
+        AppendMenuW(menu, MF_STRING, MENU_ABOUT, i18n::text(L"О программе…"));
+        images.attach(menu, MENU_ABOUT, false, menu_art::Kind::about);
         AppendMenuW(menu, MF_STRING, MENU_EXIT, i18n::text(L"Выход"));
         images.attach(menu, MENU_EXIT, false, menu_art::Kind::exit);
         POINT point; GetCursorPos(&point); SetForegroundWindow(main_window);
@@ -828,6 +836,7 @@ void tray_menu() {
             refresh_icon_safely();
             if (editor && IsWindow(editor) && !has_pending_edits()) update_inputs();
         }
+        else if (chosen == MENU_ABOUT) show_about();
         else if (chosen == MENU_EXIT && (!editor || !IsWindow(editor) || discard_pending_edits(editor))) DestroyWindow(main_window);
     } catch (...) { if (menu) DestroyMenu(menu); throw; }
 }
