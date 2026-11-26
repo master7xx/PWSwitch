@@ -17,6 +17,18 @@ Made by artificial intelligence under the supervision of an intoxicated intellig
 
 Plan names and setting descriptions come from Windows and are left unchanged. Windows supplies system dialog buttons, so those may use the system language. PWSwitch manages Windows power plans; it does not directly change the separate **Power mode** control in Windows Settings.
 
+## Auto-switch by window focus
+
+You can set rules that switch the active power plan based on which window currently has focus, whether the application is windowed or full-screen:
+
+- Each rule matches an executable (by its full path or name) and, optionally, a substring of the window title.
+- When the focused window matches a rule, the plan listed in that rule is activated immediately.
+- If no rule matches, a **fallback plan** is activated (or nothing switches if you leave the fallback empty). The fallback defaults to the *economical / saving* plan when one is present among the available plans.
+- `Wow.exe` with the title `World of…` can be mapped to the *Balanced* plan, and leaving focus returns to the fallback plan.
+- Rules are meant to be quick and proactive: on focus change the matching plan is applied right away (no delay). Dragging through Alt-Tab can flicker plans; you can disable auto-switch from the same dialog.
+
+Choose **Auto-switch by window focus…** from the tray menu to enable the feature, add/edit/delete rules, pick the fallback plan and save. When you add a rule you can list open windows and pick one — the executable path is shown in bold and its window title follows in normal text.
+
 ## Download and run
 
 1. Download `PWSwitch-portable.zip` from the [latest release](https://github.com/master7xx/PWSwitch/releases/latest).
@@ -43,6 +55,6 @@ See [testing instructions](docs/TESTING.md) for the test commands and their effe
 
 ## Privacy and license
 
-The application has no network, telemetry or automatic update features. The chosen interface language is stored under `HKCU\Software\PWSwitch\Language`; optional autostart is stored separately for the current user. The app does not request elevated privileges on its own.
+The application has no network, telemetry or automatic update features. The chosen interface language is stored under `HKCU\Software\PWSwitch\Language`; optional autostart is stored separately for the current user. Auto-switch rules are stored under `HKCU\Software\PWSwitch\Rules`. The app does not request elevated privileges on its own.
 
 PWSwitch is available under the [MIT License](LICENSE).

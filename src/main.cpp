@@ -7,6 +7,9 @@
 #include "system_commands.h"
 #include "autostart.h"
 #include "i18n.h"
+#include "focus_rules.h"
+#include "focus_tracking.h"
+#include "focus_ui.h"
 #include <windows.h>
 #include <shellapi.h>
 #include <commctrl.h>
@@ -20,11 +23,12 @@
 namespace {
 constexpr UINT tray_message = WM_APP + 1;
 constexpr UINT commit_scheme_message = WM_APP + 2;
+constexpr UINT focus_changed_message = WM_APP + 3;
 constexpr int ID_SCHEME = 100, ID_LIST = 101, ID_HIDDEN = 102, ID_AC = 103, ID_DC = 104,
     ID_APPLY_AC = 105, ID_APPLY_DC = 106, ID_REFRESH = 107;
 constexpr UINT MENU_PLAN = 1000, MENU_DISPLAY = 2000, MENU_SLEEP = 2100, MENU_ADVANCED = 3000,
     MENU_WINDOWS = 3001, MENU_EXIT = 3002, MENU_UNDO = 3003, MENU_AUTOSTART = 3004, MENU_AUTOSTART_REMOVE = 3005, MENU_ABOUT = 3006,
-    MENU_LANGUAGE = 3100;
+    MENU_LANGUAGE = 3100, MENU_RULES = 3200;
 const DWORD intervals[] = {0, 60, 300, 600, 900, 1800, 3600, 7200};
 const wchar_t* interval_labels[] = {L"Никогда", L"1 минута", L"5 минут", L"10 минут", L"15 минут", L"30 минут", L"1 час", L"2 часа"};
 const GUID VIDEO = {0x7516b95f,0xf776,0x4464,{0x8c,0x53,0x06,0x16,0x7f,0x40,0xcc,0x99}};
@@ -62,6 +66,45 @@ bool last_hidden = false;
 std::wstring baseline_ac, baseline_dc;
 LRESULT baseline_ac_selection = CB_ERR, baseline_dc_selection = CB_ERR;
 undo::Journal undo_history;
+// Auto-switch by foreground window.
+struct FocusBackend : focus_tracking::Backend {
+    focus_tracking::WindowInfo foreground() override { return focus_tracking::current_foreground(); }
+    GUID active() override { return power::active_scheme(); }
+    void activate(const GUID& scheme) override { power::activate(scheme); }
+};
+// Global backend used by the engine; constructed when main_window exists.
+// Declared before evaluate_focus so the engine object is visible there.
+FocusBackend g_focus_backend;
+focus_tracking::Engine g_focus_engine{g_focus_backend};
+
+focus_rules::Ruleset g_focus_rules;
+// Last foreground window we evaluated, so the periodic fallback poll does not
+// repeat work when nothing changed.
+HWND g_last_focus_window = nullptr;
+
+void evaluate_focus() {
+    if (!g_focus_rules.enabled) return;
+    try { g_focus_engine.evaluate(g_focus_rules); }
+    catch (const std::exception&) { /* ignore transient foreground/power errors */ }
+}
+
+// Polling fallback: the WinEvent hook can be missed in some cases (e.g. focus
+// changes while a menu is open, or on some full-screen transitions), so the
+// timer re-checks the foreground window and evaluates only when it changed.
+void poll_focus() {
+    if (!g_focus_rules.enabled) return;
+    HWND current = GetForegroundWindow();
+    if (current == g_last_focus_window) return;
+    g_last_focus_window = current;
+    evaluate_focus();
+}
+
+// Called by the out-of-context WinEvent hook on the hook thread. It must be
+// tiny and only forward the request to the UI thread via a posted message.
+void CALLBACK focus_event_proc(HWINEVENTHOOK, DWORD event, HWND, LONG, LONG, DWORD, DWORD) {
+    if (event != EVENT_SYSTEM_FOREGROUND) return;
+    if (main_window && IsWindow(main_window)) PostMessageW(main_window, focus_changed_message, 0, 0);
+}
 std::vector<power::Item> localized_plans(const std::vector<power::Item>& plans) {
     auto result = plans;
     for (auto& plan : result) plan.name = i18n::scheme_name(plan.id, plan.name);
@@ -151,7 +194,7 @@ void report(HWND owner, const std::exception& ex) {
     MessageBoxW(owner, message.c_str(), L"PWSwitch", MB_OK | MB_ICONERROR);
 }
 void show_about() {
-    std::wstring message = L"PWSwitch 1.1.0\r\n\r\n";
+    std::wstring message = L"PWSwitch 1.2.0\r\n\r\n";
     message += i18n::text(L"Переключение схем питания Windows из системного трея.");
     message += L"\r\n\r\nMIT License\r\nhttps://github.com/master7xx/PWSwitch";
     MessageBoxW(main_window, message.c_str(), i18n::text(L"PWSwitch — о программе"), MB_OK | MB_ICONINFORMATION);
@@ -234,12 +277,27 @@ LRESULT CALLBACK prompt_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     if ((msg == WM_COMMAND && LOWORD(wp) == IDCANCEL) || msg == WM_CLOSE) { DestroyWindow(hwnd); return 0; }
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
+// Center a top-level window on the work area. The PWSwitch main window is a
+// hidden zero-size window at (0,0), so centering over it would place dialogs in
+// the corner of the screen.
+void center_window_on_work_area(HWND window) {
+    RECT area{};
+    SystemParametersInfoW(SPI_GETWORKAREA, 0, &area, 0);
+    RECT rect{};
+    if (!GetWindowRect(window, &rect)) return;
+    int width = rect.right - rect.left, height = rect.bottom - rect.top;
+    int x = area.left + ((area.right - area.left) - width) / 2;
+    int y = area.top + ((area.bottom - area.top) - height) / 2;
+    SetWindowPos(window, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 bool ask_minutes(DWORD& result, bool has_current, DWORD current_seconds) {
     Prompt p;
     if (has_current && current_seconds % 60 == 0) p.initial = std::to_wstring(current_seconds / 60);
     HWND dialog = CreateWindowExW(WS_EX_DLGMODALFRAME, L"PWSwitchPrompt", i18n::text(L"Своё время"), WS_CAPTION | WS_SYSMENU | WS_POPUP,
         CW_USEDEFAULT, CW_USEDEFAULT, 324, 160, main_window, nullptr, instance, &p);
     if (!dialog) return false;
+    center_window_on_work_area(dialog);
     EnableWindow(main_window, FALSE); ShowWindow(dialog, SW_SHOW);
     MSG msg;
     while (IsWindow(dialog) && GetMessageW(&msg, nullptr, 0, 0) > 0) {
@@ -726,6 +784,8 @@ void tray_menu() {
         AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
         AppendMenuW(menu, MF_STRING, MENU_ADVANCED, i18n::text(L"Расширенные настройки…"));
         images.attach(menu, MENU_ADVANCED, false, menu_art::Kind::settings);
+        AppendMenuW(menu, MF_STRING, MENU_RULES, i18n::text(L"Авто-переключение по фокусу окна…"));
+        images.attach(menu, MENU_RULES, false, menu_art::Kind::settings);
         AppendMenuW(menu, MF_STRING, MENU_WINDOWS, i18n::text(L"Электропитание Windows…"));
         images.attach(menu, MENU_WINDOWS, false, menu_art::Kind::windows);
         autostart::RegistryStorage autostart_storage;
@@ -800,6 +860,14 @@ void tray_menu() {
                 snapshot.ac, snapshot.dc, action_label,
                 {display ? UndoCaption::Kind::display : UndoCaption::Kind::sleep, menu_plans, active, {}, {}});
         } else if (chosen == MENU_ADVANCED) show_editor();
+        else if (chosen == MENU_RULES) {
+            if (focus_ui::show_rules(main_window, localized_plans(power::schemes()))) {
+                g_focus_rules = focus_rules::load();
+                // Rules changed: re-evaluate even if the focused window is the same.
+                g_last_focus_window = GetForegroundWindow();
+                evaluate_focus();
+            }
+        }
         else if (chosen == MENU_WINDOWS) {
             auto command = system_commands::power_options();
             auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(main_window, L"open", command.executable.c_str(), command.arguments.c_str(), nullptr, SW_SHOWNORMAL));
@@ -844,6 +912,7 @@ LRESULT CALLBACK main_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     try {
         if (show_settings_message && msg == show_settings_message) {
             if (editor_modal) { if (editor) SetForegroundWindow(GetLastActivePopup(editor)); }
+            else if (HWND modal = focus_ui::current_modal()) { SetForegroundWindow(modal); }
             else if (tray_interaction) { show_settings_pending = true; EndMenu(); }
             else show_editor();
             return 0;
@@ -854,12 +923,14 @@ LRESULT CALLBACK main_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             if (icon_registered) refresh_icon_safely();
             return 0;
         }
+        if (msg == focus_changed_message) { g_last_focus_window = GetForegroundWindow(); evaluate_focus(); return 0; }
         if (msg == WM_TIMER && wp == 1) {
             if (!icon_registered) {
                 icon_registered = Shell_NotifyIconW(NIM_MODIFY, &icon) != FALSE;
                 if (!icon_registered) icon_registered = Shell_NotifyIconW(NIM_ADD, &icon) != FALSE;
             }
             if (icon_registered) refresh_icon_safely();
+            poll_focus();
             return 0;
         }
         if (msg == WM_POWERBROADCAST && wp == PBT_POWERSETTINGCHANGE && lp) {
@@ -871,6 +942,7 @@ LRESULT CALLBACK main_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         if (msg == tray_message && (LOWORD(lp) == WM_LBUTTONUP || LOWORD(lp) == WM_RBUTTONUP || LOWORD(lp) == WM_CONTEXTMENU)) {
             if (editor_modal) { if (editor) SetForegroundWindow(GetLastActivePopup(editor)); return 0; }
+            if (HWND modal = focus_ui::current_modal()) { SetForegroundWindow(modal); return 0; }
             if (tray_interaction) return 0;
             struct InteractionGuard { InteractionGuard() { tray_interaction = true; } ~InteractionGuard() { tray_interaction = false; } };
             { InteractionGuard guard; tray_menu(); }
@@ -901,6 +973,7 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE, PWSTR, int) {
         return 0;
     }
     ui_font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    focus_ui::init(instance, ui_font);
     WNDCLASSW wc{}; wc.hInstance = instance; wc.hCursor = LoadCursorW(nullptr, IDC_ARROW); wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
     wc.hIcon = LoadIconW(instance, MAKEINTRESOURCEW(101));
     if (!wc.hIcon) wc.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
@@ -917,18 +990,36 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE, PWSTR, int) {
     icon_registered = true;
     refresh_icon_safely();
     scheme_notification = RegisterPowerSettingNotification(main_window, &ACTIVE_SCHEME_EVENT, DEVICE_NOTIFY_WINDOW_HANDLE);
+    // Load auto-switch rules and arm the foreground-window hook.
+    try { g_focus_rules = focus_rules::load(); } catch (const std::exception&) { g_focus_rules = {}; }
+    HWINEVENTHOOK focus_hook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, nullptr,
+        &focus_event_proc, 0, 0, WINEVENT_OUTOFCONTEXT);
+    if (focus_hook && g_focus_rules.enabled) evaluate_focus();
     UINT_PTR timer = SetTimer(main_window, 1, 5000, nullptr);
     if (!scheme_notification && !timer) MessageBoxW(nullptr, i18n::text(L"Windows не разрешила отслеживать смену схемы. Значок обновится при переключении схемы через приложение."), L"PWSwitch", MB_OK | MB_ICONWARNING);
     else if (!timer) MessageBoxW(nullptr, i18n::text(L"Не удалось включить резервное обновление значка. Если он пропадёт после перезапуска проводника, перезапустите PWSwitch."), L"PWSwitch", MB_OK | MB_ICONWARNING);
     int argc = 0;
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    bool open_settings = false;
+    bool open_settings = false, open_rules = false;
     if (argv) {
-        for (int i = 1; i < argc; ++i) if (std::wstring(argv[i]) == L"--settings") open_settings = true;
+        for (int i = 1; i < argc; ++i) {
+            std::wstring arg = argv[i];
+            if (arg == L"--settings") open_settings = true;
+            else if (arg == L"--rules") open_rules = true;
+        }
         LocalFree(argv);
     }
     if (open_settings) {
         try { show_editor(); } catch (const std::exception& ex) { report(main_window, ex); }
+    }
+    if (open_rules) {
+        try {
+            if (focus_ui::show_rules(main_window, localized_plans(power::schemes()))) {
+                g_focus_rules = focus_rules::load();
+                g_last_focus_window = GetForegroundWindow();
+                evaluate_focus();
+            }
+        } catch (const std::exception& ex) { report(main_window, ex); }
     }
     MSG msg;
     while (GetMessageW(&msg, nullptr, 0, 0) > 0) {

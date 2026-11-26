@@ -20,6 +20,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -I18nTests
 .\build\i18n_tests.exe
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -I18nRegistryTests
 .\build\i18n_registry_tests.exe
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -FocusRulesTests
+.\build\focus_rules_tests.exe
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -FocusTrackingTests
+.\build\focus_tracking_tests.exe
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -LanguageUiTests
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\language_ui.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -AutostartTests
@@ -39,6 +43,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\power_options_smoke.
 ```
 
 GUI tests require an active Windows desktop and no other PWSwitch instance. Write tests create, modify and delete a temporary copy of a power plan without changing the active plan. Windows policies or permissions may prevent changes. Checks for external changes and writes are separate operations, so concurrent changes cannot be completely excluded.
+
+Auto-switch unit tests (`focus_rules_tests.exe`, `focus_tracking_tests.exe`) use an in-memory ruleset and a fake power backend; they do not touch Windows power settings or the foreground window.
 
 `power_options_smoke.ps1` briefly moves the mouse pointer and opens Windows Power Options, then closes the newly detected window and restores the pointer. It recognizes Russian and English window titles.
 

@@ -104,7 +104,28 @@ const Entry catalog[] = {
 {L"Значение для сети изменилось во время записи.", L"The AC value changed during writing.", L"El valor con corriente cambió durante la escritura."},
 {L"Параметр изменился во время записи.", L"The setting changed during writing.", L"El ajuste cambió durante la escritura."},
 {L"Не удалось сохранить язык интерфейса.", L"Unable to save the interface language.", L"No se pudo guardar el idioma de la interfaz."},
-{L"Не удалось заполнить список схем. Обновите окно настроек.", L"Unable to populate the plan list. Refresh the settings window.", L"No se pudo cargar la lista de planes. Actualice la ventana de ajustes."}
+{L"Не удалось заполнить список схем. Обновите окно настроек.", L"Unable to populate the plan list. Refresh the settings window.", L"No se pudo cargar la lista de planes. Actualice la ventana de ajustes."},
+// Auto-switch by foreground window.
+{L"Авто-переключение по фокусу окна…", L"Auto-switch by window focus…", L"Cambio automático por foco de ventana…"},
+{L"PWSwitch — авто-переключение", L"PWSwitch — Auto-switch", L"PWSwitch — Cambio automático"},
+{L"Включить авто-переключение по фокусу окна", L"Enable auto-switch by window focus", L"Activar cambio automático por foco de ventana"},
+{L"Резервный план:", L"Fallback plan:", L"Plan de respaldo:"},
+{L"Правила:", L"Rules:", L"Reglas:"},
+{L"Исполняемый файл (путь):", L"Executable (path):", L"Ejecutable (ruta):"},
+{L"Заголовок окна:", L"Window title:", L"Título de ventana:"},
+{L"План питания:", L"Power plan:", L"Plan de energía:"},
+{L"Добавить", L"Add", L"Añadir"}, {L"Заменить", L"Replace", L"Reemplazar"}, {L"Удалить", L"Delete", L"Eliminar"},
+{L"Сохранить", L"Save", L"Guardar"},
+{L"— не переключать —", L"— do not switch —", L"— no cambiar —"},
+{L"Укажите исполняемый файл.", L"Specify the executable.", L"Especifique el ejecutable."},
+{L"Выбрать окно…", L"Choose a window…", L"Elegir una ventana…"},
+{L"Выбор активного окна", L"Choose an active window", L"Elegir ventana activa"},
+{L"Выбрать", L"Choose", L"Elegir"},
+{L"Активные окна не найдены.", L"No active windows were found.", L"No se encontraron ventanas activas."},
+{L"(нет exe)", L"(no exe)", L"(sin ejecutable)"}, {L"(любой заголовок)", L"(any title)", L"(cualquier título)"},
+{L"  ->  ", L"  ->  ", L"  ->  "},
+{L"Не удалось открыть окно правил (код ", L"Unable to open the rules window (code ", L"No se pudo abrir la ventana de reglas (código "},
+{L"Не удалось открыть список окон (код ", L"Unable to open the window list (code ", L"No se pudo abrir la lista de ventanas (código "},
 };
 void check(LSTATUS code) { if (code != ERROR_SUCCESS) throw std::system_error(static_cast<int>(code), std::system_category()); }
 bool valid(Language l) { return l == Language::system || l == Language::english || l == Language::russian || l == Language::spanish; }

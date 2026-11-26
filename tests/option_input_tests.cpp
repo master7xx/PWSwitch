@@ -132,7 +132,7 @@ int main() {
         about_menu_present = false;
         tray_menu();
         if (!about_menu_present) return 10;
-        if (dialog_title != item.second || dialog_message.find(L"PWSwitch 1.1.0") == std::wstring::npos ||
+        if (dialog_title != item.second || dialog_message.find(L"PWSwitch 1.2.0") == std::wstring::npos ||
             dialog_message.find(L"MIT License") == std::wstring::npos ||
             dialog_message.find(L"https://github.com/master7xx/PWSwitch") == std::wstring::npos ||
             dialog_message.find(i18n::text(L"Переключение схем питания Windows из системного трея.")) == std::wstring::npos) return 9;
