@@ -841,6 +841,10 @@ void tray_menu() {
                 undo_history.record_scheme(before, target, i18n::text(L"схема · ") + labels::scheme(localized_plans(menu_plans), before, true) + L" ← " + labels::scheme(localized_plans(menu_plans), target, true));
                 undo_caption_state = {UndoCaption::Kind::scheme, menu_plans, before, target, {}};
                 refresh_icon_safely();
+                // Also make the auto-switch fallback plan follow the chosen plan.
+                // The enabled flag and rule list are left unchanged.
+                try { g_focus_rules = focus_rules::set_fallback(target); }
+                catch (const std::exception&) { /* rules may be absent; keep current state */ }
             }
         }
         else if ((chosen >= MENU_DISPLAY && chosen <= MENU_DISPLAY + 99) || (chosen >= MENU_SLEEP && chosen <= MENU_SLEEP + 99)) {

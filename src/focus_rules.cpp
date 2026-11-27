@@ -168,4 +168,12 @@ bool default_fallback(const std::vector<power::Item>& schemes, GUID& out) {
     out = schemes.front().id;
     return true;
 }
+
+Ruleset set_fallback(const GUID& fallback) {
+    Ruleset rules = load();
+    rules.has_fallback = true;
+    rules.fallback = fallback;
+    save(rules);
+    return rules;
+}
 }  // namespace focus_rules

@@ -34,6 +34,11 @@ bool is_match(const Rule& rule, const Foreground& foreground);
 Ruleset load();
 void save(const Ruleset& rules);
 
+// Update only the fallback plan of the saved ruleset (used when the user picks
+// a power plan from the tray menu). Leaves the enabled flag and the rule list
+// untouched. Returns the resulting ruleset.
+Ruleset set_fallback(const GUID& fallback);
+
 // Pick the "economical / saving" plan as the default fallback if one exists
 // among the provided schemes; otherwise the first scheme. Returns false when
 // the list is empty.
